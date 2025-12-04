@@ -58,7 +58,7 @@ def sacar(*, valor, saldo, limite, numero_saques, limite_saques=LIMITE_SAQUES, e
         print("Operação falhou! O valor informado é inválido.")
 
 
-def depositar(valor, saldo, extrato, /):
+def depositar(valor, extrato, /):
     if valor > 0:
         atualizar_saldo(valor)
         atualizar_extrato(extrato, "Deposito", valor)
@@ -106,7 +106,7 @@ while True:
 
     if opcao == "d":
         valor = float(input("Informe o valor do depósito: "))
-        depositar(valor, saldo, extrato)
+        depositar(valor, extrato)
 
     elif opcao == "s":
         valor = float(input("Informe o valor do saque: "))
