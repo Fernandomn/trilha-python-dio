@@ -4,14 +4,16 @@ menu = """
 [d] Depositar
 [s] Sacar
 [e] Extrato
+[u] Mudar Usuário
 [q] Sair
 
 => """
-
+usuario = None
 saldo = 0
 limite = 500
-extrato = []
 numero_saques = 0
+lista_extrato = []
+lista_usuarios = []
 LIMITE_SAQUES = 3
 
 
@@ -72,7 +74,32 @@ def visualizar_historico(saldo, extrato):
 
 
 def criar_usuario(nome, data_nascimento, cpf, endereco):
-    pass
+    novo_usuario = Usuario(nome, data_nascimento, cpf, endereco)
+    lista_usuarios.append(novo_usuario)
+    return novo_usuario
+
+
+def recuperar_usuario(cpf):
+    possiveis_usuarios = [usuario.cpf == cpf for usuario in lista_usuarios]
+    usuario = None
+    if not len(possiveis_usuarios):
+        opcao = input(
+            "Usuário não cadastrado. Gostaria de criar um novo usuário? (s/n):"
+        )
+        if opcao.lower() == "s":
+            print("Vamos pedir algumas informações:")
+            nome = input("Nome completo: ")
+            data_nascimento = input("Data de nascimento (dd-mm-aaaa): ")
+            endereco = input(
+                "Endereço (logradouro, nro - bairro - cidade/sigla estado - cep): "
+            )
+            usuario = criar_usuario(nome, data_nascimento, cpf, endereco)
+        else:
+            print("Operação encerrada.")
+    else:
+        usuario = possiveis_usuarios[0]
+    lista_usuarios
+    return usuario
 
 
 def criar_conta(agencia, numero_conta, usuario):
@@ -100,13 +127,23 @@ def atualizar_numero_saques():
     numero_saques += 1
 
 
+# ----------------------------------------------------------------------
+
+cpf = input("Olá, bem vindo ao DIO Bank! Por favor, informe o seu CPF:")
+
+usuario = recuperar_usuario(cpf)
+if usuario == None:
+    print("Usuário não encontrado. Operação finalizada.")
+    exit()
+print(f"Olá {usuario.nome}, seja bem vindo!")
+
 while True:
 
     opcao = input(menu)
 
     if opcao == "d":
         valor = float(input("Informe o valor do depósito: "))
-        depositar(valor, extrato)
+        depositar(valor, lista_extrato)
 
     elif opcao == "s":
         valor = float(input("Informe o valor do saque: "))
@@ -115,11 +152,20 @@ while True:
             saldo=saldo,
             limite=limite,
             numero_saques=numero_saques,
-            extrato=extrato,
+            extrato=lista_extrato,
         )
 
     elif opcao == "e":
-        imprimir_extrato(extrato, saldo)
+        imprimir_extrato(lista_extrato, saldo)
+
+    elif opcao == "u":
+        cpf = input("Por favor, informe o CPF do usuário:")
+        novo_usuario = recuperar_usuario(cpf)
+        if novo_usuario == None:
+            print(f"Usuário não encontrado. Vamos continuar com {usuario.nome}, ok?")
+        else:
+            usuario = novo_usuario
+            print(f"Olá {usuario.nome}, seja bem vindo!")
 
     elif opcao == "q":
         break
