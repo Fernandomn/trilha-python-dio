@@ -42,9 +42,9 @@ class Usuario:
             print("Usuário não possui conta. Vamos criar uma nova conta para ele.")
             numero_conta = len(self.lista_contas) + 1
             nova_conta = self.criar_conta(agencia, numero_conta)
-            return (self, nova_conta)
+            return nova_conta
         elif len(self.lista_contas) == 1:
-            return (self, self.lista_contas[0])
+            return self.lista_contas[0]
         else:
             print("O usuário possui mais de uma conta. Selecione qual deseja acessar:")
             for conta in self.lista_contas:
@@ -67,39 +67,56 @@ class Conta:
         self.numero_saques = 0
         self.lista_extrato = []
 
+    def atualizar_extrato(self, tipo_operacao, valor):
+        self.lista_extrato.append(f"{tipo_operacao}: R$ {valor:.2f}\n")
 
-def sacar(*, valor, saldo, limite, numero_saques, limite_saques=LIMITE_SAQUES, extrato):
-    excedeu_saldo = valor > saldo
+    def imprimir_extrato(self):
+        print("\n================ EXTRATO ================")
+        print(
+            "Não foram realizadas movimentações."
+            if not self.lista_extrato
+            else "".join(self.lista_extrato)
+        )
+        print(f"\nSaldo: R$ {self.saldo:.2f}")
+        print("==========================================")
 
-    excedeu_limite = valor > limite
+    def atualizar_saldo(self, valor):
+        self.saldo += valor
 
-    excedeu_saques = numero_saques >= limite_saques
+    def atualizar_numero_saques(self):
+        numero_saques += 1
 
-    if excedeu_saldo:
-        print("Operação falhou! Você não tem saldo suficiente.")
+    def sacar(self, *, valor, limite_saques=LIMITE_SAQUES):
+        excedeu_saldo = valor > self.saldo
 
-    elif excedeu_limite:
-        print("Operação falhou! O valor do saque excede o limite.")
+        excedeu_limite = valor > self.limite
 
-    elif excedeu_saques:
-        print("Operação falhou! Número máximo de saques excedido.")
+        excedeu_saques = self.numero_saques >= limite_saques
 
-    elif valor > 0:
-        atualizar_saldo(-valor)
-        atualizar_extrato(extrato, "Saque", valor)
-        atualizar_numero_saques()
+        if excedeu_saldo:
+            print("Operação falhou! Você não tem saldo suficiente.")
 
-    else:
-        print("Operação falhou! O valor informado é inválido.")
+        elif excedeu_limite:
+            print("Operação falhou! O valor do saque excede o limite.")
 
+        elif excedeu_saques:
+            print("Operação falhou! Número máximo de saques excedido.")
 
-def depositar(valor, extrato, /):
-    if valor > 0:
-        atualizar_saldo(valor)
-        atualizar_extrato(extrato, "Deposito", valor)
+        elif valor > 0:
+            self.atualizar_saldo(-valor)
+            self.atualizar_extrato("Saque", valor)
+            self.atualizar_numero_saques()
 
-    else:
-        print("Operação falhou! O valor informado é inválido.")
+        else:
+            print("Operação falhou! O valor informado é inválido.")
+
+    def depositar(self, valor, /):
+        if valor > 0:
+            self.atualizar_saldo(valor)
+            self.atualizar_extrato("Deposito", valor)
+
+        else:
+            print("Operação falhou! O valor informado é inválido.")
 
 
 def visualizar_historico(saldo, extrato):
@@ -117,7 +134,7 @@ def criar_usuario(nome, data_nascimento, cpf, endereco):
 
 
 def recuperar_usuario(cpf):
-    possiveis_usuarios = [usuario.cpf == cpf for usuario in lista_usuarios]
+    possiveis_usuarios = [usuario for usuario in lista_usuarios if usuario.cpf == cpf]
     usuario = None
     if not len(possiveis_usuarios):
         opcao = input(
@@ -137,34 +154,14 @@ def recuperar_usuario(cpf):
     else:
         usuario = possiveis_usuarios[0]
 
-    return (usuario, usuario.recuperar_conta_usuario())
-
-
-def atualizar_extrato(extrato, tipo_operacao, valor):
-    extrato.append(f"{tipo_operacao}: R$ {valor:.2f}\n")
-
-
-def imprimir_extrato(extrato, saldo):
-    print("\n================ EXTRATO ================")
-    print("Não foram realizadas movimentações." if not extrato else "".join(extrato))
-    print(f"\nSaldo: R$ {saldo:.2f}")
-    print("==========================================")
-
-
-def atualizar_saldo(valor):
-    global saldo
-    saldo += valor
-
-
-def atualizar_numero_saques():
-    global numero_saques
-    numero_saques += 1
+    return usuario
 
 
 # ----------------------------------------------------------------------
 
 cpf = input("Olá, bem vindo ao DIO Bank! Por favor, informe o seu CPF:")
-usuario, conta_ativa = recuperar_usuario(cpf)
+usuario = recuperar_usuario(cpf)
+conta_ativa = usuario.recuperar_conta_usuario()
 
 if usuario == None:
     print("Usuário não encontrado. Operação finalizada.")
@@ -177,30 +174,26 @@ while True:
 
     if opcao == "d":
         valor = float(input("Informe o valor do depósito: "))
-        depositar(valor, conta_ativa.lista_extrato)
+        conta_ativa.depositar(valor)
 
     elif opcao == "s":
         valor = float(input("Informe o valor do saque: "))
-        sacar(
+        conta_ativa.sacar(
             valor=valor,
-            saldo=saldo,
-            limite=conta_ativa.limite,
-            numero_saques=numero_saques,
-            extrato=conta_ativa.lista_extrato,
         )
 
     elif opcao == "e":
-        imprimir_extrato(conta_ativa.lista_extrato, saldo)
+        conta_ativa.imprimir_extrato()
 
     elif opcao == "u":
         cpf = input("Por favor, informe o CPF do usuário:")
-        (novo_usuario, nova_conta) = recuperar_usuario(cpf)
+        novo_usuario = recuperar_usuario(cpf)
         if novo_usuario == None:
             print(f"Usuário não encontrado. Vamos continuar com {usuario.nome}, ok?")
         else:
             usuario = novo_usuario
-            conta_ativa = nova_conta
             print(f"Olá {usuario.nome}, seja bem vindo!")
+            conta_ativa = novo_usuario.recuperar_conta_usuario()
 
     elif opcao == "q":
         break
