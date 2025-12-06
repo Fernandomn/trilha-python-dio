@@ -1,4 +1,6 @@
 agencia = "0001"
+lista_usuarios = []
+LIMITE_SAQUES = 3
 menu = """
 
 [d] Depositar
@@ -8,31 +10,62 @@ menu = """
 [q] Sair
 
 => """
-usuario = None
-saldo = 0
-limite = 500
-numero_saques = 0
-lista_extrato = []
-lista_usuarios = []
-LIMITE_SAQUES = 3
 
 
 class Usuario:
-    lista_contas = []
 
     def __init__(self, nome, data_nascimento, cpf, endereco):
         self.nome = nome
         self.data_nascimento = data_nascimento
         self.cpf = cpf
         self.endereco = endereco
+        self.lista_contas = []
+
+    def criar_conta(self, agencia, numero_conta):
+        nova_conta = Conta(agencia, numero_conta, self.cpf)
+        self.lista_contas.append(nova_conta)
+        return nova_conta
+
+    def recuperar_conta_por_numero(self, numero_conta):
+        return next(
+            (
+                conta
+                for conta in self.lista_contas
+                if conta.numero_conta == numero_conta
+            ),
+            None,
+        )
+
+    def recuperar_conta_usuario(self):
+        if len(self.lista_contas) == 0:
+            global agencia
+            print("Usuário não possui conta. Vamos criar uma nova conta para ele.")
+            numero_conta = len(self.lista_contas) + 1
+            nova_conta = self.criar_conta(agencia, numero_conta)
+            return (self, nova_conta)
+        elif len(self.lista_contas) == 1:
+            return (self, self.lista_contas[0])
+        else:
+            print("O usuário possui mais de uma conta. Selecione qual deseja acessar:")
+            for conta in self.lista_contas:
+                print(f"Conta número: {conta.numero_conta} - Agência: {conta.agencia}")
+            numero_conta = int(input("Informe o número da conta que deseja acessar: "))
+            conta_selecionada = self.recuperar_conta_por_numero(numero_conta)
+            if conta_selecionada is None:
+                print("Número de conta inválido. Operação encerrada.")
+                return None
+            return conta_selecionada
 
 
 class Conta:
-    def __init__(self, numero_conta, usuario):
-        global agencia
+    def __init__(self, agencia, numero_conta, cpf_usuario):
         self.agencia = agencia
         self.numero_conta = numero_conta
-        self.usuario = usuario
+        self.cpf_usuario = cpf_usuario
+        self.saldo = 0
+        self.limite = 500
+        self.numero_saques = 0
+        self.lista_extrato = []
 
 
 def sacar(*, valor, saldo, limite, numero_saques, limite_saques=LIMITE_SAQUES, extrato):
@@ -74,8 +107,12 @@ def visualizar_historico(saldo, extrato):
 
 
 def criar_usuario(nome, data_nascimento, cpf, endereco):
-    novo_usuario = Usuario(nome, data_nascimento, cpf, endereco)
-    lista_usuarios.append(novo_usuario)
+    novo_usuario = None
+    if any(usuario.cpf == cpf for usuario in lista_usuarios):
+        print("Já existe um usuário cadastrado com esse CPF.")
+    else:
+        novo_usuario = Usuario(nome, data_nascimento, cpf, endereco)
+        lista_usuarios.append(novo_usuario)
     return novo_usuario
 
 
@@ -96,14 +133,11 @@ def recuperar_usuario(cpf):
             usuario = criar_usuario(nome, data_nascimento, cpf, endereco)
         else:
             print("Operação encerrada.")
+            return None
     else:
         usuario = possiveis_usuarios[0]
-    lista_usuarios
-    return usuario
 
-
-def criar_conta(agencia, numero_conta, usuario):
-    pass
+    return (usuario, usuario.recuperar_conta_usuario())
 
 
 def atualizar_extrato(extrato, tipo_operacao, valor):
@@ -130,8 +164,8 @@ def atualizar_numero_saques():
 # ----------------------------------------------------------------------
 
 cpf = input("Olá, bem vindo ao DIO Bank! Por favor, informe o seu CPF:")
+usuario, conta_ativa = recuperar_usuario(cpf)
 
-usuario = recuperar_usuario(cpf)
 if usuario == None:
     print("Usuário não encontrado. Operação finalizada.")
     exit()
@@ -143,28 +177,29 @@ while True:
 
     if opcao == "d":
         valor = float(input("Informe o valor do depósito: "))
-        depositar(valor, lista_extrato)
+        depositar(valor, conta_ativa.lista_extrato)
 
     elif opcao == "s":
         valor = float(input("Informe o valor do saque: "))
         sacar(
             valor=valor,
             saldo=saldo,
-            limite=limite,
+            limite=conta_ativa.limite,
             numero_saques=numero_saques,
-            extrato=lista_extrato,
+            extrato=conta_ativa.lista_extrato,
         )
 
     elif opcao == "e":
-        imprimir_extrato(lista_extrato, saldo)
+        imprimir_extrato(conta_ativa.lista_extrato, saldo)
 
     elif opcao == "u":
         cpf = input("Por favor, informe o CPF do usuário:")
-        novo_usuario = recuperar_usuario(cpf)
+        (novo_usuario, nova_conta) = recuperar_usuario(cpf)
         if novo_usuario == None:
             print(f"Usuário não encontrado. Vamos continuar com {usuario.nome}, ok?")
         else:
             usuario = novo_usuario
+            conta_ativa = nova_conta
             print(f"Olá {usuario.nome}, seja bem vindo!")
 
     elif opcao == "q":
