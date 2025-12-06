@@ -7,6 +7,7 @@ menu = """
 [s] Sacar
 [e] Extrato
 [u] Mudar Usuário
+[c] Mudar Conta
 [q] Sair
 
 => """
@@ -25,6 +26,9 @@ class Usuario:
         nova_conta = Conta(agencia, numero_conta, self.cpf)
         self.lista_contas.append(nova_conta)
         return nova_conta
+
+    def exibir_contas(self):
+        print("\n".join(self.lista_contas))
 
     def recuperar_conta_por_numero(self, numero_conta):
         return next(
@@ -194,6 +198,34 @@ while True:
             usuario = novo_usuario
             print(f"Olá {usuario.nome}, seja bem vindo!")
             conta_ativa = novo_usuario.recuperar_conta_usuario()
+    elif opcao == "c":
+        if len(usuario.lista_contas) == 0:
+            exit()
+        elif len(usuario.lista_contas) == 1:
+            criar_nova_conta = input(
+                "Usuário possui apenas uma conta. Deseja criar uma nova conta? (s/n)"
+            )
+            if criar_nova_conta.lower() == "s":
+                numero_conta = len(usuario.lista_contas) + 1
+                nova_conta = usuario.criar_conta(agencia, numero_conta)
+                conta_ativa = nova_conta
+                print(
+                    f"Nova conta número {conta_ativa.numero_conta} criada e selecionada com sucesso!"
+                )
+        else:
+            print("O usuário possui mais de uma conta. Selecione qual deseja acessar:")
+            usuario.exibir_contas()
+            numero_conta = int(input("Informe o número da conta que deseja acessar: "))
+            conta_selecionada = usuario.recuperar_conta_por_numero(numero_conta)
+            if conta_selecionada is None:
+                print(
+                    "Número de conta inválido. Vamos continuar com a conta atual, ok?"
+                )
+            else:
+                conta_ativa = conta_selecionada
+                print(
+                    f"Conta número {conta_ativa.numero_conta} selecionada com sucesso!"
+                )
 
     elif opcao == "q":
         break
