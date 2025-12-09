@@ -140,7 +140,7 @@ class Historico:
             {
                 "tipo": transacao.__class__.__name__,
                 "valor": transacao.valor,
-                "data": datetime.now().strftime("%d-%m-%Y %H:%M:%s"),
+                "data": datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
             }
         )
 
@@ -190,7 +190,13 @@ class Deposito(Transacao):
 
 
 def log_transacao(func):
-    pass
+
+    def envelope(*args, **kwargs):
+        resultado = func(*args, **kwargs)
+        print(f"{datetime.now()} - {func.__name__}")
+        return resultado
+
+    return envelope
 
 
 def menu():
