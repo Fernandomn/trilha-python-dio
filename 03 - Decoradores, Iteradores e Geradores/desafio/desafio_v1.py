@@ -145,7 +145,9 @@ class Historico:
         )
 
     def gerar_relatorio(self, tipo_transacao=None):
-        pass
+        for transacao in self._transacoes:
+            if not tipo_transacao or transacao["tipo"] == tipo_transacao:
+                yield transacao
 
 
 class Transacao(ABC):
@@ -279,15 +281,12 @@ def exibir_extrato(clientes):
         return
 
     print("\n================ EXTRATO ================")
-    # TODO: atualizar a implementação para utilizar o gerador definido em Historico
-    transacoes = conta.historico.transacoes
-
+    
     extrato = ""
-    if not transacoes:
+    for transacao in conta.historico.gerar_relatorio():
+        extrato += f"\n{transacao['data']} - {transacao['tipo']}:\n\tR$ {transacao['valor']:.2f}"
+    if not extrato:
         extrato = "Não foram realizadas movimentações."
-    else:
-        for transacao in transacoes:
-            extrato += f"\n{transacao['tipo']}:\n\tR$ {transacao['valor']:.2f}"
 
     print(extrato)
     print(f"\nSaldo:\n\tR$ {conta.saldo:.2f}")
