@@ -5,13 +5,18 @@ from datetime import datetime
 
 class ContaIterador:
     def __init__(self, contas):
-        pass
+        self.contas = contas
+        self.index = 0
 
     def __iter__(self):
-        pass
+        return self
 
     def __next__(self):
-        pass
+        if self.index >= len(self.contas):
+            raise StopIteration
+        conta_info = self.contas[self.index]
+        self.index += 1
+        return conta_info
 
 
 class Cliente:
@@ -124,6 +129,7 @@ class ContaCorrente(Conta):
             Agência:\t{self.agencia}
             C/C:\t\t{self.numero}
             Titular:\t{self.cliente.nome}
+            Saldo Atual:\tR$ {self.saldo:.2f}
         """
 
 
@@ -331,7 +337,7 @@ def criar_conta(numero_conta, clientes, contas):
 
 def listar_contas(contas):
     # TODO: alterar implementação, para utilizar a classe ContaIterador
-    for conta in contas:
+    for conta in ContaIterador(contas):
         print("=" * 100)
         print(textwrap.dedent(str(conta)))
 
