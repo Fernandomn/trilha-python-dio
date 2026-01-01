@@ -1,110 +1,8 @@
 import textwrap
 from abc import ABC, abstractmethod
 
+# ----------------------------------------------------------------------
 # classes
-
-
-class Transacao(ABC):
-    @property
-    @abstractproperty
-    def valor(self):
-        pass
-
-    @abstractmethod
-    def registrar(self, conta):
-        pass
-
-
-class Deposito(Transacao):
-    def __init__(self, valor):
-        self._valor = valor
-
-    @property
-    def valor(self):
-        return self._valor
-
-    def registrar(self, conta):
-        sucesso = conta.depositar(self.valor)
-        if sucesso: 
-            conta.historico.adicionar_transacao(self)
-        # conta['saldo'] += valor
-        # conta['extrato'] += f"Depósito:\tR$ {valor:.2f}\n"
-        # print("\n=== Depósito realizado com sucesso! ===")
-
-
-class Saque(Transacao):
-    def __init__(self, valor):
-        self._valor = valor
-
-    @property
-    def valor(self):
-        return self._valor
-
-    def registrar(self, conta):
-        sucesso = conta.sacar(self.valor)
-        if sucesso: 
-            conta.historico.adicionar_transacao(self)
-        # excedeu_saldo = valor > conta['saldo']
-        # excedeu_limite = valor > conta['limite']
-        # excedeu_saques = conta['numero_saques'] >= conta['limite_saques']
-
-        # if excedeu_saldo:
-        #     print("\n@@@ Operação falhou! Você não tem saldo suficiente. @@@")
-
-        # elif excedeu_limite:
-        #     print("\n@@@ Operação falhou! O valor do saque excede o limite. @@@")
-
-        # elif excedeu_saques:
-        #     print("\n@@@ Operação falhou! Número máximo de saques excedido. @@@")
-
-        # elif valor > 0:
-        #     conta['saldo'] -= valor
-        #     conta['extrato'] += f"Saque:\t\tR$ {valor:.2f}\n"
-        #     conta['numero_saques'] += 1
-        #     print("\n=== Saque realizado com sucesso! ===")
-
-        # else:
-        #     print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
-
-
-class Cliente:
-    def __init__(self, endereco):
-        self._endereco = endereco
-        self._contas = []
-
-    @property
-    def contas(self):
-        return self._contas
-
-    @property
-    def endereco(self):
-        return self._endereco
-
-    def realizar_transacao(self, transacao, conta, valor):
-        transacao.registrar(conta, valor)
-
-    def adicionar_conta(self, conta):
-        self.contas.append(conta)
-
-
-class Historico:
-    def __init__(self):
-        self._transacoes = []
-
-    @property
-    def transacoes(self):
-        return self._transacoes
-
-    def adicionar_transacao(self, transacao):
-        self._transacoes.append(transacao)
-
-
-class PessoaFisica(Cliente):
-    def __init__(self, nome, data_nascimento, cpf, endereco):
-        super().__init__(nome, endereco)
-        self.nome = nome
-        self.data_nascimento = data_nascimento
-        self.cpf = cpf
 
 
 class Conta:
@@ -121,46 +19,53 @@ class Conta:
     def saldo(self):
         return self._saldo
 
+    @property
+    def numero_conta(self):
+        return self._numero_conta
+
+    @property
+    def agencia(self):
+        return self._agencia
+
+    @property
+    def cliente(self):
+        return self._cliente
+
+    @property
+    def historico(self):
+        return self._historico
+
     @classmethod
-    def nova_conta(cls, cliente, numero_conta):
+    def nova_conta(cls, cliente, numero_conta: int):
         return cls(numero_conta, cliente)
 
-    def sacar(self, valor):
+    def sacar(self, valor: float):
         excedeu_saldo = valor > self.saldo
         if excedeu_saldo:
             print("\n@@@ Operação falhou! Você não tem saldo suficiente. @@@")
+            return False
 
         elif valor > 0:
-            # saldo -= valor
-            # extrato += f"Saque:\t\tR$ {valor:.2f}\n"
-            # numero_saques += 1
+            self._saldo -= valor
             print("\n=== Saque realizado com sucesso! ===")
+            return True
 
         else:
             print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
+            return False
 
-        # saque = Saque(valor)
-        # if valor > 0 and valor <= self.saldo:
-        #     saque.registrar(self)
-        #     self.historico.adicionar_transacao(saque)
-        #     return True
-        # return False
-
-    def depositar(self, valor):
-        deposito = Deposito(valor)
+    def depositar(self, valor: float):
         if valor > 0:
-            deposito.registrar(self)
-            self.historico.adicionar_transacao(deposito)
+            self.saldo += valor
+            print("\n=== Depósito realizado com sucesso! ===")
             return True
-        return False
 
-    # def exibir_extrato(self):
-    #     self.historico.exibir()
-    #     print(f"\nSaldo:\t\tR$ {self.saldo:.2f}")
+        print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
+        return False
 
 
 class ContaCorrente(Conta):
-    def __init__(self, numero_conta, cliente, limite=500, limite_saques=3):
+    def __init__(self, numero_conta: str, cliente, limite=500, limite_saques=3):
         super().__init__(numero_conta, cliente)
         self._limite = limite
         self._limite_saques = limite_saques
@@ -173,6 +78,113 @@ class ContaCorrente(Conta):
     @property
     def limite_saques(self):
         return self._limite_saques
+
+    def sacar(self, valor: float):
+        excedeu_saldo = valor > self.saldo
+        excedeu_limite = valor > self.limite
+        excedeu_saques = len(self.historico.transacoes) >= self.limite_saques
+
+        if excedeu_saldo:
+            print("\n@@@ Operação falhou! Você não tem saldo suficiente. @@@")
+            return False
+
+        elif excedeu_limite:
+            print("\n@@@ Operação falhou! O valor do saque excede o limite. @@@")
+            return False
+
+        elif excedeu_saques:
+            print("\n@@@ Operação falhou! Número máximo de saques excedido. @@@")
+            return False
+
+        elif valor > 0:
+            saldo -= valor
+            extrato += f"Saque:\t\tR$ {valor:.2f}\n"
+            numero_saques += 1
+            print("\n=== Saque realizado com sucesso! ===")
+            return True
+
+        else:
+            print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
+            return False
+
+
+class Transacao(ABC):
+    @property
+    @abstractmethod
+    def valor(self):
+        pass
+
+    @abstractmethod
+    def registrar(self, conta: Conta):
+        pass
+
+
+class Deposito(Transacao):
+    def __init__(self, valor: float):
+        self._valor = valor
+
+    @property
+    def valor(self):
+        return self._valor
+
+    def registrar(self, conta: Conta):
+        sucesso = conta.depositar(self.valor)
+        if sucesso:
+            conta.historico.adicionar_transacao(self)
+
+
+class Saque(Transacao):
+    def __init__(self, valor: float):
+        self._valor = valor
+
+    @property
+    def valor(self):
+        return self._valor
+
+    def registrar(self, conta):
+        sucesso = conta.sacar(self.valor)
+        if sucesso:
+            conta.historico.adicionar_transacao(self)
+
+
+class Cliente:
+    def __init__(self, endereco):
+        self._endereco = endereco
+        self._lista_contas = []
+
+    @property
+    def lista_contas(self):
+        return self._lista_contas
+
+    @property
+    def endereco(self):
+        return self._endereco
+
+    def realizar_transacao(self, transacao: Transacao, conta: Conta, valor: float):
+        transacao.registrar(conta, valor)
+
+    def adicionar_conta(self, conta):
+        self.lista_contas.append(conta)
+
+
+class PessoaFisica(Cliente):
+    def __init__(self, cpf: str, nome: str, data_nascimento: str, endereco: str):
+        super().__init__(endereco)
+        self.nome = nome
+        self.data_nascimento = data_nascimento
+        self.cpf = cpf
+
+
+class Historico:
+    def __init__(self):
+        self._transacoes = []
+
+    @property
+    def transacoes(self):
+        return self._transacoes
+
+    def adicionar_transacao(self, transacao: Transacao):
+        self._transacoes.append(transacao)
 
 
 # ------------------------------------------------------------------------------
