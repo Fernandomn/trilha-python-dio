@@ -302,15 +302,15 @@ def listar_contas(contas):
 
 
 def main():
-    LIMITE_SAQUES = 3
-    AGENCIA = "0001"
+    # LIMITE_SAQUES = 3
+    # AGENCIA = "0001"
 
-    saldo = 0
-    limite = 500
-    extrato = ""
-    numero_saques = 0
-    usuarios = []
-    contas = []
+    # saldo = 0
+    # limite = 500
+    # extrato = ""
+    # numero_saques = 0
+    lista_usuarios = []
+    lista_contas = []
 
     while True:
         opcao = menu()
@@ -336,17 +336,17 @@ def main():
             exibir_extrato(saldo, extrato=extrato)
 
         elif opcao == "nu":
-            criar_usuario(usuarios)
+            criar_usuario(lista_usuarios)
 
         elif opcao == "nc":
-            numero_conta = len(contas) + 1
-            conta = criar_conta(AGENCIA, numero_conta, usuarios)
+            numero_conta = len(lista_contas) + 1
+            conta = criar_conta(AGENCIA, numero_conta, lista_usuarios)
 
             if conta:
-                contas.append(conta)
+                lista_contas.append(conta)
 
         elif opcao == "lc":
-            listar_contas(contas)
+            listar_contas(lista_contas)
 
         elif opcao == "q":
             break
