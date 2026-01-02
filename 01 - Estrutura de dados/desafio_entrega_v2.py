@@ -56,7 +56,7 @@ class Conta:
 
     def depositar(self, valor: float):
         if valor > 0:
-            self.saldo += valor
+            self._saldo += valor
             print("\n=== Depósito realizado com sucesso! ===")
             return True
 
@@ -69,7 +69,7 @@ class ContaCorrente(Conta):
         super().__init__(numero_conta, cliente)
         self._limite = limite
         self._limite_saques = limite_saques
-        # self.numero_saques = 0
+        self._numero_saques = 0
 
     @property
     def limite(self):
@@ -78,6 +78,10 @@ class ContaCorrente(Conta):
     @property
     def limite_saques(self):
         return self._limite_saques
+
+    @property
+    def numero_saques(self):
+        return self._numero_saques
 
     def sacar(self, valor: float):
         excedeu_saldo = valor > self.saldo
@@ -97,9 +101,9 @@ class ContaCorrente(Conta):
             return False
 
         elif valor > 0:
-            saldo -= valor
-            extrato += f"Saque:\t\tR$ {valor:.2f}\n"
-            numero_saques += 1
+            self._saldo -= valor
+            self._numero_saques += 1
+            # extrato += f"Saque:\t\tR$ {valor:.2f}\n"
             print("\n=== Saque realizado com sucesso! ===")
             return True
 
@@ -160,11 +164,17 @@ class Cliente:
     def endereco(self):
         return self._endereco
 
-    def realizar_transacao(self, transacao: Transacao, conta: Conta, valor: float):
-        transacao.registrar(conta, valor)
+    def realizar_transacao(self, transacao: Transacao, conta: Conta):
+        transacao.registrar(conta)
 
     def adicionar_conta(self, conta):
         self.lista_contas.append(conta)
+        
+    def selecionar_conta(self, numero_conta: int):
+        contas_filtradas = [
+            conta for conta in self.lista_contas if conta.numero_conta == numero_conta
+        ]
+        return contas_filtradas[0] if contas_filtradas else None
 
 
 class PessoaFisica(Cliente):
@@ -216,91 +226,110 @@ def depositar(saldo, valor, extrato, /):
 
 
 def sacar(*, saldo, valor, extrato, limite, numero_saques, limite_saques):
-    excedeu_saldo = valor > saldo
-    excedeu_limite = valor > limite
-    excedeu_saques = numero_saques >= limite_saques
+    pass
+    # excedeu_saldo = valor > saldo
+    # excedeu_limite = valor > limite
+    # excedeu_saques = numero_saques >= limite_saques
 
-    if excedeu_saldo:
-        print("\n@@@ Operação falhou! Você não tem saldo suficiente. @@@")
+    # if excedeu_saldo:
+    #     print("\n@@@ Operação falhou! Você não tem saldo suficiente. @@@")
 
-    elif excedeu_limite:
-        print("\n@@@ Operação falhou! O valor do saque excede o limite. @@@")
+    # elif excedeu_limite:
+    #     print("\n@@@ Operação falhou! O valor do saque excede o limite. @@@")
 
-    elif excedeu_saques:
-        print("\n@@@ Operação falhou! Número máximo de saques excedido. @@@")
+    # elif excedeu_saques:
+    #     print("\n@@@ Operação falhou! Número máximo de saques excedido. @@@")
 
-    elif valor > 0:
-        saldo -= valor
-        extrato += f"Saque:\t\tR$ {valor:.2f}\n"
-        numero_saques += 1
-        print("\n=== Saque realizado com sucesso! ===")
+    # elif valor > 0:
+    #     saldo -= valor
+    #     extrato += f"Saque:\t\tR$ {valor:.2f}\n"
+    #     numero_saques += 1
+    #     print("\n=== Saque realizado com sucesso! ===")
 
-    else:
-        print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
+    # else:
+    #     print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
 
-    return saldo, extrato
+    # return saldo, extrato
 
 
 def exibir_extrato(saldo, /, *, extrato):
-    print("\n================ EXTRATO ================")
-    print("Não foram realizadas movimentações." if not extrato else extrato)
-    print(f"\nSaldo:\t\tR$ {saldo:.2f}")
-    print("==========================================")
+    pass
+    # print("\n================ EXTRATO ================")
+    # print("Não foram realizadas movimentações." if not extrato else extrato)
+    # print(f"\nSaldo:\t\tR$ {saldo:.2f}")
+    # print("==========================================")
 
 
-def criar_usuario(usuarios):
-    cpf = input("Informe o CPF (somente número): ")
-    usuario = filtrar_usuario(cpf, usuarios)
+def criar_usuario(lista_usuarios, cpf=None):
+    if not cpf:
+        cpf = input("Informe o CPF (somente número): ")
+    usuario = filtrar_usuario(cpf, lista_usuarios)
 
     if usuario:
         print("\n@@@ Já existe usuário com esse CPF! @@@")
-        return
+        return None
 
-    nome = input("Informe o nome completo: ")
-    data_nascimento = input("Informe a data de nascimento (dd-mm-aaaa): ")
+    print("Vamos precisar de algumas informações:")
+    nome = input("Nome completo: ")
+    data_nascimento = input("Data de nascimento (dd-mm-aaaa): ")
     endereco = input(
-        "Informe o endereço (logradouro, nro - bairro - cidade/sigla estado): "
+        "Endereço (logradouro, nro - bairro - cidade/sigla estado - cep): "
+    )
+    usuario = PessoaFisica(
+        nome=nome, data_nascimento=data_nascimento, cpf=cpf, endereco=endereco
     )
 
-    usuarios.append(
-        {
-            "nome": nome,
-            "data_nascimento": data_nascimento,
-            "cpf": cpf,
-            "endereco": endereco,
-        }
-    )
+    lista_usuarios.append(usuario)
 
     print("=== Usuário criado com sucesso! ===")
+    return usuario
 
 
-def filtrar_usuario(cpf, usuarios):
-    usuarios_filtrados = [usuario for usuario in usuarios if usuario["cpf"] == cpf]
+def filtrar_usuario(cpf, lista_usuarios):
+    usuarios_filtrados = [usuario for usuario in lista_usuarios if usuario["cpf"] == cpf]
     return usuarios_filtrados[0] if usuarios_filtrados else None
 
 
+def recuperar_usuario(lista_usuarios, cpf):
+    usuario = filtrar_usuario(cpf, lista_usuarios)
+    if not usuario:
+        opcao = input(
+            "Usuário não cadastrado. Gostaria de criar um novo usuário? (s/n):"
+        )
+        if opcao.lower() == "s":
+            usuario = criar_usuario(lista_usuarios, cpf)
+        else:
+            print("Operação encerrada.")
+            return None
+        
+    return usuario
+
+
 def criar_conta(agencia, numero_conta, usuarios):
-    cpf = input("Informe o CPF do usuário: ")
-    usuario = filtrar_usuario(cpf, usuarios)
+    pass
+    # cpf = input("Informe o CPF do usuário: ")
+    # usuario = filtrar_usuario(cpf, usuarios)
 
-    if usuario:
-        print("\n=== Conta criada com sucesso! ===")
-        return {"agencia": agencia, "numero_conta": numero_conta, "usuario": usuario}
+    # if usuario:
+    #     print("\n=== Conta criada com sucesso! ===")
+    #     return {"agencia": agencia, "numero_conta": numero_conta, "usuario": usuario}
 
-    print("\n@@@ Usuário não encontrado, fluxo de criação de conta encerrado! @@@")
+    # print("\n@@@ Usuário não encontrado, fluxo de criação de conta encerrado! @@@")
 
 
 def listar_contas(contas):
-    for conta in contas:
-        linha = f"""\
-            Agência:\t{conta['agencia']}
-            C/C:\t\t{conta['numero_conta']}
-            Titular:\t{conta['usuario']['nome']}
-        """
-        print("=" * 100)
-        print(textwrap.dedent(linha))
+    pass
+    # for conta in contas:
+    #     linha = f"""\
+    #         Agência:\t{conta['agencia']}
+    #         C/C:\t\t{conta['numero_conta']}
+    #         Titular:\t{conta['usuario']['nome']}
+    #     """
+    #     print("=" * 100)
+    #     print(textwrap.dedent(linha))
 
 
+# ----------------------------------------------------------------------------
 def main():
     # LIMITE_SAQUES = 3
     # AGENCIA = "0001"
@@ -312,41 +341,51 @@ def main():
     lista_usuarios = []
     lista_contas = []
 
+    cpf = input("Olá, bem vindo ao DIO Bank! Por favor, informe o seu CPF:")
+    usuario = recuperar_usuario(lista_usuarios, cpf)
+    # conta_ativa = usuario.recuperar_conta_usuario()
+
     while True:
         opcao = menu()
 
         if opcao == "d":
-            valor = float(input("Informe o valor do depósito: "))
+            pass
+            # valor = float(input("Informe o valor do depósito: "))
 
-            saldo, extrato = depositar(saldo, valor, extrato)
+            # saldo, extrato = depositar(saldo, valor, extrato)
 
         elif opcao == "s":
-            valor = float(input("Informe o valor do saque: "))
+            pass
+            # valor = float(input("Informe o valor do saque: "))
 
-            saldo, extrato = sacar(
-                saldo=saldo,
-                valor=valor,
-                extrato=extrato,
-                limite=limite,
-                numero_saques=numero_saques,
-                limite_saques=LIMITE_SAQUES,
-            )
+            # saldo, extrato = sacar(
+            #     saldo=saldo,
+            #     valor=valor,
+            #     extrato=extrato,
+            #     limite=limite,
+            #     numero_saques=numero_saques,
+            #     limite_saques=LIMITE_SAQUES,
+            # )
 
         elif opcao == "e":
-            exibir_extrato(saldo, extrato=extrato)
+            pass
+            # exibir_extrato(saldo, extrato=extrato)
 
         elif opcao == "nu":
-            criar_usuario(lista_usuarios)
+            pass
+            # criar_usuario(lista_usuarios)
 
         elif opcao == "nc":
-            numero_conta = len(lista_contas) + 1
-            conta = criar_conta(AGENCIA, numero_conta, lista_usuarios)
+            pass
+            # numero_conta = len(lista_contas) + 1
+            # conta = criar_conta(AGENCIA, numero_conta, lista_usuarios)
 
-            if conta:
-                lista_contas.append(conta)
+            # if conta:
+            #     lista_contas.append(conta)
 
         elif opcao == "lc":
-            listar_contas(lista_contas)
+            pass
+            # listar_contas(lista_contas)
 
         elif opcao == "q":
             break
