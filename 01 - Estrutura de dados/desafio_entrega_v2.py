@@ -210,6 +210,7 @@ def menu():
     [nc]\tNova conta
     [lc]\tListar contas
     [nu]\tNovo usuário
+    [mu]\tMudar usuário
     [q]\tSair
     => """
     return input(textwrap.dedent(menu))
@@ -372,9 +373,10 @@ def main():
             exibir_extrato(conta=conta_ativa)
 
         elif opcao == "nu":
-            pass
-            # criar_usuario(lista_usuarios)
+            criar_usuario(lista_usuarios)
 
+        elif opcao == "mu":
+            pass
         elif opcao == "nc":
             pass
             # numero_conta = len(lista_contas) + 1
