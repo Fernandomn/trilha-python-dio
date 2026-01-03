@@ -215,15 +215,11 @@ def menu():
     return input(textwrap.dedent(menu))
 
 
-def depositar(saldo, valor, extrato, /):
+def depositar(usuario: Cliente, conta: Conta, valor: float):
     if valor > 0:
-        saldo += valor
-        extrato += f"Depósito:\tR$ {valor:.2f}\n"
-        print("\n=== Depósito realizado com sucesso! ===")
+        usuario.realizar_transacao(transacao=Deposito(valor), conta=conta)
     else:
         print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
-
-    return saldo, extrato
 
 
 def sacar(*, saldo, valor, extrato, limite, numero_saques, limite_saques):
@@ -332,7 +328,7 @@ def listar_contas(lista_contas: List[Conta]):
         print(textwrap.dedent(linha))
 
 
-def recuperar_conta_usuario(usuario: Cliente):
+def recuperar_conta_usuario(usuario: Cliente, lista_contas):
     conta = None
     if not usuario.lista_contas:
         print("Usuário ainda não possui conta. Vamos criar uma nova conta para ele.")
@@ -340,15 +336,17 @@ def recuperar_conta_usuario(usuario: Cliente):
         nova_conta = ContaCorrente.nova_conta(usuario, numero_conta)
         usuario.adicionar_conta(nova_conta)
         conta = nova_conta
+        lista_contas.append(nova_conta)
     elif len(usuario.lista_contas) == 1:
         return usuario.lista_contas[0]
     else:
-        listar_contas(usuario.lista_contas)
-        numero_conta = int(input("Informe o número da conta: "))
-        conta = usuario.selecionar_conta(numero_conta)
+        while conta is None:
+            listar_contas(usuario.lista_contas)
+            numero_conta = int(input("Informe o número da conta: "))
+            conta = usuario.selecionar_conta(numero_conta)
 
-        if not conta:
-            print("\n@@@ Conta não encontrada para o usuário informado! @@@")
+            if not conta:
+                print("\n@@@ Conta não encontrada para o usuário informado! @@@")
 
     return conta
 
@@ -371,17 +369,15 @@ def main():
         print("Usuário não encontrado. Operação finalizada.")
         exit()
 
-    conta_ativa = recuperar_conta_usuario(usuario)
+    conta_ativa = recuperar_conta_usuario(usuario, lista_contas=lista_contas)
     print(f"Olá {usuario.nome}, seja bem vindo!")
 
     while True:
         opcao = menu()
 
         if opcao == "d":
-            pass
-            # valor = float(input("Informe o valor do depósito: "))
-
-            # saldo, extrato = depositar(saldo, valor, extrato)
+            valor = float(input("Informe o valor do depósito: "))
+            depositar(usuario, conta_ativa, valor)
 
         elif opcao == "s":
             pass
