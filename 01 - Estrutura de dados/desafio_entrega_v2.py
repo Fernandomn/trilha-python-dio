@@ -374,12 +374,7 @@ def main():
             usuario, conta_ativa = selecionar_usuario(lista_usuarios, lista_contas)
 
         elif opcao == "nc":
-            pass
-            # numero_conta = len(lista_contas) + 1
-            # conta = criar_conta(AGENCIA, numero_conta, lista_usuarios)
-
-            # if conta:
-            #     lista_contas.append(conta)
+            criar_conta(usuario, lista_contas)
 
         elif opcao == "lc":
             pass
