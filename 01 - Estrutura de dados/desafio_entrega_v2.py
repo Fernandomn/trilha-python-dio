@@ -217,6 +217,9 @@ def menu():
     return str.lower(input(textwrap.dedent(menu)))
 
 
+# ----------------------------métodos de transação------------------------------
+
+
 def depositar(usuario: Cliente, conta: Conta, valor: float):
     if valor > 0:
         usuario.realizar_transacao(transacao=Deposito(valor), conta=conta)
@@ -231,6 +234,9 @@ def sacar(usuario: Cliente, conta: Conta, valor: float):
         print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
 
 
+# ----------------------------métodos de extrato---------------------------------
+
+
 def exibir_extrato(conta: Conta):
     print("\n================ EXTRATO ================")
     print("conta:", conta.numero_conta)
@@ -242,6 +248,9 @@ def exibir_extrato(conta: Conta):
             print(f"{tipo_transacao}:\tR$ {transacao.valor:.2f}")
     print(f"\nSaldo:\t\tR$ {conta.saldo:.2f}")
     print("==========================================")
+
+
+# ----------------------------métodos de usuario--------------------------------
 
 
 def criar_usuario(lista_usuarios, cpf=None):
@@ -304,6 +313,9 @@ def selecionar_usuario(lista_usuarios, lista_contas):
     return usuario, conta_ativa
 
 
+# ----------------------------métodos de contas---------------------------------
+
+
 def criar_conta(usuario: Cliente, lista_contas: List[Conta]):
     numero_conta = len(usuario.lista_contas) + 1
     nova_conta = ContaCorrente.nova_conta(usuario, numero_conta)
@@ -332,13 +344,23 @@ def recuperar_conta_usuario(usuario: Cliente, lista_contas):
     elif len(usuario.lista_contas) == 1:
         conta = usuario.lista_contas[0]
     else:
+        conta = selecionar_conta(usuario)
+    return conta
+
+
+def selecionar_conta(conta_usuario: Cliente):
+    conta = None
+
+    if len(conta_usuario.lista_contas) > 1:
         while conta is None:
-            listar_contas(usuario.lista_contas)
-            numero_conta = int(input("Informe o número da conta: "))
-            conta = usuario.selecionar_conta(numero_conta)
+            listar_contas(conta_usuario.lista_contas)
+            numero_conta = int(input("Informe o número da conta que deseja acessar: "))
+            conta = conta_usuario.selecionar_conta(numero_conta)
 
             if not conta:
                 print("\n@@@ Conta não encontrada para o usuário informado! @@@")
+    else:
+        conta = conta_usuario.lista_contas[0]
 
     return conta
 
@@ -380,7 +402,7 @@ def main():
             listar_contas(lista_contas)
 
         elif opcao == "mc":
-            pass
+            conta_ativa = selecionar_conta(usuario)
 
         elif opcao == "q":
             break
