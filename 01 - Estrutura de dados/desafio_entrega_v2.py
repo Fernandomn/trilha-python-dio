@@ -377,8 +377,7 @@ def main():
             criar_conta(usuario, lista_contas)
 
         elif opcao == "lc":
-            pass
-            # listar_contas(lista_contas)
+            listar_contas(lista_contas)
 
         elif opcao == "mc":
             pass
