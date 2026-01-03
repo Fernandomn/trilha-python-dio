@@ -104,7 +104,6 @@ class ContaCorrente(Conta):
         elif valor > 0:
             self._saldo -= valor
             self._numero_saques += 1
-            # extrato += f"Saque:\t\tR$ {valor:.2f}\n"
             print("\n=== Saque realizado com sucesso! ===")
             return True
 
@@ -279,9 +278,7 @@ def criar_usuario(lista_usuarios, cpf=None):
 
 
 def filtrar_usuario(cpf, lista_usuarios):
-    usuarios_filtrados = [
-        usuario for usuario in lista_usuarios if usuario["cpf"] == cpf
-    ]
+    usuarios_filtrados = [usuario for usuario in lista_usuarios if usuario.cpf == cpf]
     return usuarios_filtrados[0] if usuarios_filtrados else None
 
 
@@ -360,6 +357,7 @@ def selecionar_conta(conta_usuario: Cliente):
             if not conta:
                 print("\n@@@ Conta não encontrada para o usuário informado! @@@")
     else:
+        print("Usuário possui apenas uma conta. Selecionando a conta automaticamente.")
         conta = conta_usuario.lista_contas[0]
 
     return conta
