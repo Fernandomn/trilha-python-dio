@@ -56,7 +56,7 @@ class Conta:
 
     def depositar(self, valor: float):
         if valor > 0:
-            self.saldo += valor
+            self._saldo += valor
             print("\n=== Depósito realizado com sucesso! ===")
             return True
 
@@ -69,7 +69,7 @@ class ContaCorrente(Conta):
         super().__init__(numero_conta, cliente)
         self._limite = limite
         self._limite_saques = limite_saques
-        # self.numero_saques = 0
+        self._numero_saques = 0
 
     @property
     def limite(self):
@@ -78,6 +78,10 @@ class ContaCorrente(Conta):
     @property
     def limite_saques(self):
         return self._limite_saques
+
+    @property
+    def numero_saques(self):
+        return self._numero_saques
 
     def sacar(self, valor: float):
         excedeu_saldo = valor > self.saldo
@@ -97,9 +101,8 @@ class ContaCorrente(Conta):
             return False
 
         elif valor > 0:
-            saldo -= valor
-            extrato += f"Saque:\t\tR$ {valor:.2f}\n"
-            numero_saques += 1
+            self._saldo -= valor
+            self._numero_saques += 1
             print("\n=== Saque realizado com sucesso! ===")
             return True
 
@@ -160,11 +163,17 @@ class Cliente:
     def endereco(self):
         return self._endereco
 
-    def realizar_transacao(self, transacao: Transacao, conta: Conta, valor: float):
-        transacao.registrar(conta, valor)
+    def realizar_transacao(self, transacao: Transacao, conta: Conta):
+        transacao.registrar(conta)
 
     def adicionar_conta(self, conta):
         self.lista_contas.append(conta)
+
+    def selecionar_conta(self, numero_conta: int):
+        contas_filtradas = [
+            conta for conta in self.lista_contas if conta.numero_conta == numero_conta
+        ]
+        return contas_filtradas[0] if contas_filtradas else None
 
 
 class PessoaFisica(Cliente):
