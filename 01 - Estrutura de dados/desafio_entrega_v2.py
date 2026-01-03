@@ -229,12 +229,17 @@ def sacar(usuario: Cliente, conta: Conta, valor: float):
         print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
 
 
-def exibir_extrato(saldo, /, *, extrato):
-    pass
-    # print("\n================ EXTRATO ================")
-    # print("Não foram realizadas movimentações." if not extrato else extrato)
-    # print(f"\nSaldo:\t\tR$ {saldo:.2f}")
-    # print("==========================================")
+def exibir_extrato(conta: Conta):
+    print("\n================ EXTRATO ================")
+    print("conta:", conta.numero_conta)
+    if not conta.historico.transacoes:
+        print("Não foram realizadas movimentações.")
+    else:
+        for transacao in conta.historico.transacoes:
+            tipo_transacao = type(transacao).__name__
+            print(f"{tipo_transacao}:\tR$ {transacao.valor:.2f}")
+    print(f"\nSaldo:\t\tR$ {conta.saldo:.2f}")
+    print("==========================================")
 
 
 def criar_usuario(lista_usuarios, cpf=None):
@@ -357,15 +362,14 @@ def main():
 
         if opcao == "d":
             valor = float(input("Informe o valor do depósito: "))
-            depositar(usuario, conta_ativa, valor)
+            depositar(usuario=usuario, conta=conta_ativa, valor=valor)
 
         elif opcao == "s":
             valor = float(input("Informe o valor do saque: "))
-            sacar(usuario, conta_ativa, valor)
+            sacar(usuario=usuario, conta=conta_ativa, valor=valor)
 
         elif opcao == "e":
-            pass
-            # exibir_extrato(saldo, extrato=extrato)
+            exibir_extrato(conta=conta_ativa)
 
         elif opcao == "nu":
             pass
