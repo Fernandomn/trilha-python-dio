@@ -209,11 +209,12 @@ def menu():
     [e]\tExtrato
     [nc]\tNova conta
     [lc]\tListar contas
+    [mc]\tMudar conta
     [nu]\tNovo usuário
     [mu]\tMudar usuário
     [q]\tSair
     => """
-    return input(textwrap.dedent(menu))
+    return str.lower(input(textwrap.dedent(menu)))
 
 
 def depositar(usuario: Cliente, conta: Conta, valor: float):
@@ -290,20 +291,28 @@ def recuperar_usuario(lista_usuarios, cpf):
     return usuario
 
 
-def criar_conta(agencia, numero_conta, usuarios):
-    pass
-    # cpf = input("Informe o CPF do usuário: ")
-    # usuario = filtrar_usuario(cpf, usuarios)
+def selecionar_usuario(lista_usuarios, lista_contas):
+    cpf = input("Por favor, informe o seu CPF:")
+    usuario = recuperar_usuario(lista_usuarios, cpf)
 
-    # if usuario:
-    #     print("\n=== Conta criada com sucesso! ===")
-    #     return {"agencia": agencia, "numero_conta": numero_conta, "usuario": usuario}
+    if usuario is None:
+        print("Usuário não encontrado. Operação finalizada.")
+        exit()
 
-    # print("\n@@@ Usuário não encontrado, fluxo de criação de conta encerrado! @@@")
+    conta_ativa = recuperar_conta_usuario(usuario, lista_contas=lista_contas)
+    print(f"Olá {usuario.nome}, seja bem vindo!")
+    return usuario, conta_ativa
+
+
+def criar_conta(usuario: Cliente, lista_contas: List[Conta]):
+    numero_conta = len(usuario.lista_contas) + 1
+    nova_conta = ContaCorrente.nova_conta(usuario, numero_conta)
+    usuario.adicionar_conta(nova_conta)
+    lista_contas.append(nova_conta)
+    return nova_conta
 
 
 def listar_contas(lista_contas: List[Conta]):
-    # pass
     for conta in lista_contas:
         linha = f"""\
             Agência:\t{conta.agencia}
@@ -316,15 +325,12 @@ def listar_contas(lista_contas: List[Conta]):
 
 def recuperar_conta_usuario(usuario: Cliente, lista_contas):
     conta = None
+
     if not usuario.lista_contas:
         print("Usuário ainda não possui conta. Vamos criar uma nova conta para ele.")
-        numero_conta = len(usuario.lista_contas) + 1
-        nova_conta = ContaCorrente.nova_conta(usuario, numero_conta)
-        usuario.adicionar_conta(nova_conta)
-        conta = nova_conta
-        lista_contas.append(nova_conta)
+        conta = criar_conta(usuario, lista_contas)
     elif len(usuario.lista_contas) == 1:
-        return usuario.lista_contas[0]
+        conta = usuario.lista_contas[0]
     else:
         while conta is None:
             listar_contas(usuario.lista_contas)
@@ -339,24 +345,13 @@ def recuperar_conta_usuario(usuario: Cliente, lista_contas):
 
 # ----------------------------------------------------------------------------
 def main():
-    # LIMITE_SAQUES = 3
-    # AGENCIA = "0001"
-
-    # saldo = 0
-    # limite = 500
-    # extrato = ""
-    # numero_saques = 0
     lista_usuarios = []
     lista_contas = []
 
-    cpf = input("Olá, bem vindo ao DIO Bank! Por favor, informe o seu CPF:")
-    usuario = recuperar_usuario(lista_usuarios, cpf)
-    if usuario is None:
-        print("Usuário não encontrado. Operação finalizada.")
-        exit()
+    print("==================== DIO Bank ====================")
+    print("Olá, bem vindo ao DIO Bank!")
 
-    conta_ativa = recuperar_conta_usuario(usuario, lista_contas=lista_contas)
-    print(f"Olá {usuario.nome}, seja bem vindo!")
+    usuario, conta_ativa = selecionar_usuario(lista_usuarios, lista_contas)
 
     while True:
         opcao = menu()
@@ -376,7 +371,8 @@ def main():
             criar_usuario(lista_usuarios)
 
         elif opcao == "mu":
-            pass
+            usuario, conta_ativa = selecionar_usuario(lista_usuarios, lista_contas)
+
         elif opcao == "nc":
             pass
             # numero_conta = len(lista_contas) + 1
@@ -388,6 +384,9 @@ def main():
         elif opcao == "lc":
             pass
             # listar_contas(lista_contas)
+
+        elif opcao == "mc":
+            pass
 
         elif opcao == "q":
             break
