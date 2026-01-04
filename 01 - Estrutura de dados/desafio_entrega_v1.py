@@ -1,3 +1,4 @@
+from datetime import datetime
 import textwrap
 from abc import ABC, abstractmethod
 
@@ -84,37 +85,38 @@ class ContaCorrente(Conta):
         return self._numero_saques
 
     def sacar(self, valor: float):
-        excedeu_saldo = valor > self.saldo
+        numero_saques = len(
+            [
+                transacao
+                for transacao in self.historico.transacoes
+                if isinstance(transacao, Saque)
+            ]
+        )
+
         excedeu_limite = valor > self.limite
-        excedeu_saques = len(self.historico.transacoes) >= self.limite_saques
+        excedeu_saques = numero_saques >= self.limite_saques
 
-        if excedeu_saldo:
-            print("\n@@@ Operação falhou! Você não tem saldo suficiente. @@@")
-            return False
-
-        elif excedeu_limite:
+        if excedeu_limite:
             print("\n@@@ Operação falhou! O valor do saque excede o limite. @@@")
-            return False
 
         elif excedeu_saques:
             print("\n@@@ Operação falhou! Número máximo de saques excedido. @@@")
-            return False
-
-        elif valor > 0:
-            self._saldo -= valor
-            self._numero_saques += 1
-            print("\n=== Saque realizado com sucesso! ===")
-            return True
 
         else:
-            print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
-            return False
+            return super().sacar(valor)
+
+        return False
 
 
 class Transacao(ABC):
     @property
     @abstractmethod
     def valor(self):
+        pass
+
+    @property
+    @abstractmethod
+    def data(self):
         pass
 
     @abstractmethod
@@ -125,28 +127,40 @@ class Transacao(ABC):
 class Deposito(Transacao):
     def __init__(self, valor: float):
         self._valor = valor
+        self._data = None
 
     @property
     def valor(self):
         return self._valor
 
+    @property
+    def data(self):
+        return self._data
+
     def registrar(self, conta: Conta):
         sucesso = conta.depositar(self.valor)
         if sucesso:
+            self._data = datetime.now().strftime("%d-%m-%Y %H:%M:%s")
             conta.historico.adicionar_transacao(self)
 
 
 class Saque(Transacao):
     def __init__(self, valor: float):
         self._valor = valor
+        self._data = None
 
     @property
     def valor(self):
         return self._valor
 
+    @property
+    def data(self):
+        return self._data
+
     def registrar(self, conta):
         sucesso = conta.sacar(self.valor)
         if sucesso:
+            self._data = datetime.now().strftime("%d-%m-%Y %H:%M:%s")
             conta.historico.adicionar_transacao(self)
 
 
