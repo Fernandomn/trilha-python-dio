@@ -479,7 +479,7 @@ def atualizar_contas(conta):
             reader = csv.DictReader(csv_file)
             contas_atualizadas = []
             for row in reader:
-                if row["numero"] == str(conta.numero):
+                if row["numero"] == str(conta.numero) and row["cliente_cpf"] == conta.cliente.cpf:
                     row["saldo"] = str(conta.saldo)
                 contas_atualizadas.append(row)
         with open(DIR / "contas.csv", "w", newline="", encoding="utf-8") as csv_file:
