@@ -1,7 +1,11 @@
+import csv
+import os
 from pathlib import Path
 import textwrap
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, UTC
+
+DIR = Path(__file__).parent
 
 
 class ContasIterador:
@@ -70,6 +74,10 @@ class Conta:
     @property
     def saldo(self):
         return self._saldo
+
+    @saldo.setter
+    def saldo(self, valor):
+        self._saldo = valor
 
     @property
     def numero(self):
@@ -168,7 +176,7 @@ class Historico:
             {
                 "tipo": transacao.__class__.__name__,
                 "valor": transacao.valor,
-                "data": datetime.utcnow().strftime("%d-%m-%Y %H:%M:%S"),
+                "data": datetime.now(UTC).strftime("%d-%m-%Y %H:%M:%S"),
             }
         )
 
@@ -178,7 +186,7 @@ class Historico:
                 yield transacao
 
     def transacoes_do_dia(self):
-        data_atual = datetime.utcnow().date()
+        data_atual = datetime.now(UTC).date()
         transacoes = []
         for transacao in self._transacoes:
             data_transacao = datetime.strptime(transacao["data"], "%d-%m-%Y %H:%M:%S").date()
@@ -290,6 +298,7 @@ def depositar(clientes):
         return
 
     cliente.realizar_transacao(conta, transacao)
+    atualizar_contas(conta)
 
 
 @log_transacao
@@ -309,6 +318,7 @@ def sacar(clientes):
         return
 
     cliente.realizar_transacao(conta, transacao)
+    atualizar_contas(conta)
 
 
 @log_transacao
@@ -355,6 +365,7 @@ def criar_cliente(clientes):
     cliente = PessoaFisica(nome=nome, data_nascimento=data_nascimento, cpf=cpf, endereco=endereco)
 
     clientes.append(cliente)
+    salvar_dados_cliente(cliente)
 
     print("\n=== Cliente criado com sucesso! ===")
 
@@ -371,6 +382,7 @@ def criar_conta(numero_conta, clientes, contas):
     conta = ContaCorrente.nova_conta(cliente=cliente, numero=numero_conta, limite=500, limite_saques=50)
     contas.append(conta)
     cliente.contas.append(conta)
+    salvar_dados_conta(conta)
 
     print("\n=== Conta criada com sucesso! ===")
 
@@ -381,9 +393,108 @@ def listar_contas(contas):
         print(textwrap.dedent(str(conta)))
 
 
-def main():
+def salvar_dados_cliente(cliente):
+    caminho = DIR / "clientes.csv"
+    arquivo_existe = os.path.exists(caminho)
+
+    with open(caminho, "a", newline="", encoding="utf-8") as arquivo_csv:
+        writer = csv.DictWriter(
+            arquivo_csv, fieldnames=["nome", "data_nascimento", "cpf", "endereco"]
+        )
+
+        if not arquivo_existe:
+            writer.writeheader()
+
+        writer.writerow(
+            {
+                "nome": cliente.nome,
+                "data_nascimento": cliente.data_nascimento,
+                "cpf": cliente.cpf,
+                "endereco": cliente.endereco,
+            }
+        )
+
+
+def salvar_dados_conta(conta):
+    caminho = DIR / "contas.csv"
+    arquivo_existe = os.path.exists(caminho)
+
+    with open(caminho, "a", newline="", encoding="utf-8") as arquivo_csv:
+        writer = csv.DictWriter(
+            arquivo_csv, fieldnames=["numero", "cliente_cpf", "saldo"]
+        )
+
+        if not arquivo_existe:
+            writer.writeheader()
+
+        writer.writerow(
+            {
+                "numero": conta.numero,
+                "cliente_cpf": conta.cliente.cpf,
+                "saldo": conta.saldo,
+            }
+        )
+
+
+def recuperar_dados_clientes_contas():
+    caminho_clientes = DIR / "clientes.csv"
+    caminho_contas = DIR / "contas.csv"
     clientes = []
     contas = []
+
+    try:
+        with open(caminho_clientes, "r", encoding="utf-8") as arquivo_csv:
+            leitor = csv.DictReader(arquivo_csv)
+            for linha in leitor:
+                cliente = PessoaFisica(
+                    nome=linha["nome"],
+                    data_nascimento=linha["data_nascimento"],
+                    cpf=linha["cpf"],
+                    endereco=linha["endereco"],
+                )
+                clientes.append(cliente)
+    except FileNotFoundError as exc:
+        print(f"Arquivo de clientes não encontrado. Iniciando com lista vazia: {exc}")
+
+    try:
+        with open(caminho_contas, "r", encoding="utf-8") as arquivo_csv:
+            leitor = csv.DictReader(arquivo_csv)
+            for linha in leitor:
+                cliente = filtrar_cliente(linha["cliente_cpf"], clientes)
+                conta = ContaCorrente(numero=linha["numero"], cliente=cliente)
+                conta.saldo = float(linha["saldo"])
+                contas.append(conta)
+                if cliente:
+                    cliente.contas.append(conta)
+
+    except FileNotFoundError as exc:
+        print(f"Arquivo de contas não encontrado. Iniciando com lista vazia: {exc}")
+
+    return clientes, contas
+
+
+def atualizar_contas(conta):
+    try:
+        with open(DIR / "contas.csv", "r", encoding="utf-8") as csv_file:
+            reader = csv.DictReader(csv_file)
+            contas_atualizadas = []
+            for row in reader:
+                if row["numero"] == str(conta.numero):
+                    row["saldo"] = str(conta.saldo)
+                contas_atualizadas.append(row)
+        with open(DIR / "contas.csv", "w", newline="", encoding="utf-8") as csv_file:
+            fieldnames = ["numero", "cliente_cpf", "saldo"]
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer.writeheader()
+            for conta_atualizada in contas_atualizadas:
+                writer.writerow(conta_atualizada)
+    except FileNotFoundError:
+        print("Arquivo de contas não encontrado. Não foi possível atualizar a conta.")
+        return
+
+
+def main():
+    clientes, contas = recuperar_dados_clientes_contas()
 
     while True:
         opcao = menu()
