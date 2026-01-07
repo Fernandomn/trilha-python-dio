@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 
 
-class contasIterador:
+class ContasIterador:
     def __init__(self, contas):
         self.contas = contas
         self._index = 0
@@ -378,7 +378,7 @@ def criar_conta(numero_conta, clientes, contas):
 
 
 def listar_contas(contas):
-    for conta in contasIterador(contas):
+    for conta in ContasIterador(contas):
         print("=" * 100)
         print(textwrap.dedent(str(conta)))
 
